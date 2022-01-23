@@ -17,10 +17,10 @@ local baseHTTP = {
         rateLimiting = {
             rps = 10,
             maxDelay = 0.1,
-            maxWindowRequest = 1
+            maxWindowRequest = 1,
             algoritm = 'simple',  -- simple , window
         }
-    }
+    },
     --- Основная функция логирования
     -- Проверяем что все параметры верны и записываем сообщение в лог
     -- @self table сслыка на текущий класс
@@ -98,7 +98,7 @@ local baseHTTP = {
     --- Сохраняем ключ -> значение в хранилище
     -- @self table сслыка на текущий класс
     -- @key string ключ
-    -- @value string значение
+    -- @value string | table значение
     -- return table {key, value} | throw error - стандартные ошибки вставки
     setData = function (self, key, value)
         return self.schema:insert({key, value})
@@ -147,15 +147,23 @@ local baseHTTP = {
         ret.status = 404
         return ret
     end,
+    --- Форматируем значение для вывода
+    -- @self table сслыка на текущий класс
+    -- @value string | table значение
+    -- return string
+    valueToString = function(self, value)
+        return type(value)=='table' and json.encode(value) or tostring(value)
+    end,
     --- Возвращаем найденное значение
     -- Возвращаем HTTP_CODE 200 и value
     -- @self table сслыка на текущий класс
     -- @request table server:route параметр из функции роутинга
     -- @key string ключ
-    -- @value string значение
+    -- @value string | table значение
     -- return table server:route:render Отформатированный ответ с правильным HTTP_CODE
     returnValue = function(self, request, key, value)
-        self:logDebug(self.message.log_requestReturnValue:format(request.peer.host,request.peer.port, key, value))
+        value = self:valueToString(value)
+        self:logDebug(self.message.log_requestReturnValue:format(request.peer.host,request.peer.port, self.entry, key, value))
         local ret = request:render({text = value })
         ret.status = 200
         return ret
@@ -165,7 +173,7 @@ local baseHTTP = {
     -- @self table сслыка на текущий класс
     -- @request table server:route параметр из функции роутинга
     -- @key string ключ
-    -- @value string значение
+    -- @value string | table значение
     -- return table server:route:render Отформатированный ответ с правильным HTTP_CODE
     returnKeyNotFound = function(self, request, key)
         local message = self.message.log_returnKeyNotFound:format(request.peer.host,request.peer.port, self.entry, key, body)
@@ -183,7 +191,7 @@ local baseHTTP = {
     returnKeyExist = function(self, request, key)
         local message = self.message.log_errorKeyExist:format(request.peer.host,request.peer.port, self.entry, key)
         self:logError(message)
-        local ret = request:render({text = 'message'})
+        local ret = request:render({text = message})
         ret.status = 409
         return ret
     end, 
@@ -191,12 +199,25 @@ local baseHTTP = {
     -- Возвращаем HTTP_CODE 400 и отформатированную ошибку
     -- @self table сслыка на текущий класс
     -- @request table server:route параметр из функции роутинга
-    -- @value string value
+    -- @value string | table значение
     -- return table server:route:render Отформатированный ответ с правильным HTTP_CODE
     returnErrorBodyParse = function(self, request, value)
+        value = self:valueToString(value)
         local message = self.message.log_errorBodyParse:format(request.peer.host,request.peer.port, self.entry, value)
         self:logError(message)
-        local ret = request:render({text = 'message'})
+        local ret = request:render({text = message})
+        ret.status = 400
+        return ret
+    end,
+    --- Возвращаем ошибку не задан ключ в запросе
+    -- Возвращаем HTTP_CODE 400 и отформатированную ошибку
+    -- @self table сслыка на текущий класс
+    -- @request table server:route параметр из функции роутинга
+    -- return table server:route:render Отформатированный ответ с правильным HTTP_CODE
+    returnErrorKeyNotInRequest = function(self, request)
+        local message = self.message.log_errorKeyNotInRequest:format(request.peer.host,request.peer.port, self.entry)
+        self:logError(message)
+        local ret = request:render({text = message})
         ret.status = 400
         return ret
     end,
@@ -208,14 +229,25 @@ local baseHTTP = {
     -- @request table server:route параметр из функции роутинга
     -- return table server:route:render Отформатированный ответ с правильным HTTP_CODE
     exec = function (self, request)
-        print(dump({request}))
-        local key  = request:param('key')
-        local body = request:param('value')
-        print(dump({request,key,body}))
-        if (self:testRPS()) then
-            return self:execEntry(request, key, body)
+        local key     = false
+        local keyPost = false
+        local value   = false
+
+        pcall(function() key     = request:get('key') end)
+        pcall(function() keyPost = request:param('key') end)
+        pcall(function() value   = request:param('value') end)
+
+        print(dump({key=key, keyPost= keyPost, value = value}))
+        if not (key or keyPost) then
+            return self:returnErrorKeyNotInRequest(request)
         end
-        local message = self.message.log_errorManyRPS:format(request.peer.host,request.peer.port, self.entry, key, body)
+        
+        if (self:testRPS()) then
+            return self:execEntry(request, key or keyPost, value)
+        end
+
+        value = self:valueToString(body)
+        local message = self.message.log_errorManyRPS:format(request.peer.host,request.peer.port, self.entry, key, value)
         self:logError(message)
         local ret = request:render({text = message})
         ret.status = 429

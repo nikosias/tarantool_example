@@ -5,7 +5,7 @@ local config = {
     rateLimiting = {
         rps = 10,
         maxDelay = 0.1,
-        algoritm = 'simple',  -- simple , window
+        algoritm = 'window',  -- simple , window
     }
 }
 return config

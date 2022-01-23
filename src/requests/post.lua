@@ -1,5 +1,6 @@
 local baseHTTP = require("baseHTTP")
-local dump  = require('dump')
+local dump = require('dump')
+local json = require('json')
 
 --- Класс роутинга POST запроса
 local post = {
@@ -15,24 +16,23 @@ local post = {
     -- @request table server:route параметр из функции роутинга
     -- return table server:route:render Отформатированный ответ с правильным HTTP_CODE
     execEntry = function (self, request, key, value)
-        dump({request=request})
-        local ok, ret = self:parse(value)
-        dump(key, value)
-        if(not ok or not ret['key']  or not ret['value']) then
-            return self:returnErrorBodyParse(request, value)
-        end
+        local val, err = false, nil
+        val, err = type(value)=='table' and value or self:parse(value)
 
-        key   = ret['key']
-        value = ret['value']
+        dump({key=key, val = val, value= value, err = err })
+
+        if not val then
+            return self:returnErrorBodyParse(request, value, err)
+        end
 
         local curValue = self:testExist(key)
         if curValue then
             return self:returnKeyExist()
         end
         
-        local value = josn.encode(value)
-        self:setData(key, josn.encode(value))
-        return self:returnValue(value)
+        local value = json.encode(val)
+        self:setData(key, value)
+        return self:returnValue(request, key, value)
     end
 }
 

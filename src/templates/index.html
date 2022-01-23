@@ -32,12 +32,12 @@
             senddelete:'DELETE',
         }
         async function sendRequest(method, key, value) {
-            const response = await fetch('/kv'+((method !== 'POST')?'/'+key:''), {
+            const response = await fetch('/kv'+((method !== 'POST1')?'/'+key:''), {
                 method: method, 
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: (method === 'POST' || method === 'PUT')? 1234 :null
+                body: (method === 'POST' || method === 'PUT')? JSON.stringify({key:method === 'POST'?key:undefined, value}):null
             });
             const code = response.status;
             let answ = '';

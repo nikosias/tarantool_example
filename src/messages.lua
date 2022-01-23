@@ -7,7 +7,7 @@ return {
     log_errorKeyNotFound     = 'Error. Request from %s:%s to %s. key: %s not found',
     log_errorSchemaBroken    = 'Error. key: schema is brocken',
     log_errorBodyParse       = 'Error. parse: wrong json: %s',
-
+    log_errorKeyNotInRequest = 'Error. Request from %s:%s to %s. Field: key not found',
     log_messageError = "Error %s %s",
     log_messageInfo  = "Info %s %s",
     log_messageDebug = "Debug %s %s",
