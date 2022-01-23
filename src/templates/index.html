@@ -1,0 +1,108 @@
+<html>
+    <head><title>Tarantool example</title></head>
+    <body>
+        <h2>Пример работы с тарантулом</h2>
+        <div class=sendElements>
+            <div class=row>
+                <div class=sendValues>
+                    <div class="column">
+                        <span style="white-space:nowrap;">Key field:&nbsp;</span><input type='text' value='key' name='sendKey' id='sendKey'/>
+                    </div>
+                    Value field:&nbsp;
+                    <textarea  name='sendBody'  id='sendValue'>{"sampe":"test","number":1}</textarea>
+                </div>
+                <div id=sendButtons>
+                    <input type='button' class='sendButton' value='post'   id='sendpost'   />
+                    <input type='button' class='sendButton' value='get'    id='sendget'    />
+                    <input type='button' class='sendButton' value='put'    id='sendput'    />
+                    <input type='button' class='sendButton' value='delete' id='senddelete' />
+                </div>
+            </div>
+            <div class=row>
+                <div class=column>reciveCode:&nbsp;<div id='reciveCode'>...</div></div>
+                <div class=row>reciveText: <div id='reciveText'>...</div></div>
+            </div>
+        </div>
+    </body>
+    <script>
+        var methodTypes={
+            sendpost:'POST',
+            sendget:'GET',
+            sendput:'PUT',
+            senddelete:'DELETE',
+        }
+        async function sendRequest(method, key, value) {
+            const response = await fetch('/kv'+((method !== 'POST')?'/'+key:''), {
+                method: method, 
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: (method === 'POST' || method === 'PUT')? 1234 :null
+            });
+            const code = response.status;
+            let answ = '';
+            if (code == 200){
+                try{
+                    answ = await response.json(); 
+                }catch(error){
+                    answ = error.message;
+                }
+            }else{
+                answ = await response.text()
+            }
+            return {code, answ};
+        }
+
+        function sendEvent(event) {
+            let method = methodTypes[event.target.id];
+            if (!method){
+                return;
+            }
+            const key  = document.getElementById("sendKey").value;
+            let  value = document.getElementById("sendValue").value;
+            try{
+                value=JSON.parse(value);
+            }catch(e){
+                console.error(e,value)
+            }
+            sendRequest(method, key, value).then(({code, answ})=>{
+                document.getElementById("reciveCode").textContent = code;
+                document.getElementById("reciveText").textContent = answ;
+                console.log(1234,{method, key, value, code, answ})
+            });
+        }
+        // Добавляет обработчика событий для таблицы
+        var buttons = document.getElementById("sendButtons");
+        buttons.addEventListener("click", sendEvent, false);
+    </script>
+    <style>
+        .sendElements{
+            display: flex;
+            flex-direction: column;
+            width:400px;
+        }
+        .sendValues{
+            display: flex;
+            flex-direction: column;
+        }
+        .column{
+            display: flex;
+        }
+        #sendButtons{
+            flex-direction: row;
+            display: flex;
+        }
+        .sendButtons{
+            display: flex;
+        }
+        #reciveText{
+            border: 1px solid grey;
+        }
+        #sendValue{
+            height:200px;
+        }
+        #sendKey{
+            width:100%;
+        }
+    </style>
+</html>

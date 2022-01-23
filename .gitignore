@@ -1,0 +1,7 @@
+src/*.snap
+src/*.xlog
+luacov.*.out
+.pytest_cache
+.rocks
+src/*.log
+**/__pycache__*
