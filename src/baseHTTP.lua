@@ -93,15 +93,31 @@ local baseHTTP = {
     -- @key string ключ
     -- return string | nil найденное значение или nil если значение отсутствует
     testExist = function (self, key)
-        return self.schema:get({key})
+        local value = self.schema:get(key)
+        return value and value[2]
     end,
     --- Сохраняем ключ -> значение в хранилище
     -- @self table сслыка на текущий класс
     -- @key string ключ
     -- @value string | table значение
     -- return table {key, value} | throw error - стандартные ошибки вставки
-    setData = function (self, key, value)
+    setDataInDB = function (self, key, value)
         return self.schema:insert({key, value})
+    end,
+    --- Обновляем ключ -> значение в хранилище
+    -- @self table сслыка на текущий класс
+    -- @key string ключ
+    -- @value string | table значение
+    -- return table {key, value} | throw error - стандартные ошибки вставки
+    updateDataInDB = function (self, key, value)
+        return self.schema:update(key, {{'=', 2, value}})
+    end,
+    --- Обновляем ключ -> значение в хранилище
+    -- @self table сслыка на текущий класс
+    -- @key string ключ
+    -- return table {key, value} | throw error - стандартные ошибки вставки
+    deleteDataInDB = function (self, key)
+        return self.schema:delete(key)
     end,
     --- устанавливаем дб и конфигурацию
     -- @self table сслыка на текущий класс
@@ -233,11 +249,10 @@ local baseHTTP = {
         local keyPost = false
         local value   = false
 
-        pcall(function() key     = request:get('key') end)
+        pcall(function() key     = request:stash('key') end)
         pcall(function() keyPost = request:param('key') end)
         pcall(function() value   = request:param('value') end)
 
-        print(dump({key=key, keyPost= keyPost, value = value}))
         if not (key or keyPost) then
             return self:returnErrorKeyNotInRequest(request)
         end

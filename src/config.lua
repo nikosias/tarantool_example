@@ -1,6 +1,6 @@
 local config = {
     logFile = nil,--'tarantool.log',
-    port    = 8080,
+    port    = 2020,
     addr    = '*',
     rateLimiting = {
         rps = 10,

@@ -1,20 +1,26 @@
-local baseHTTP = require("../baseHTTP")
+local baseHTTP = require("baseHTTP")
+--- Класс роутинга DELETE  запроса
 local delete = {
-    entry = baseHTTP.const.entrys.delete,
-    execEntry = function (key, value)
-        if(self:testExist(key) then
-            self:error(self.message.log_errorKeyNotFound:format(key))
-            return
+    entry = baseHTTP.const.entrys.get,
+    --- Функция вызываемая из базового класса
+    -- Поведение при вызове метода DELETE 
+    -- DELETE kv/{id} - удалить данные по ключу
+    -- DELETE возвращает 404 если такого ключа нет
+    -- @self table сслыка на текущий класс
+    -- @key string ключ
+    -- @value string значение
+    -- @request table server:route параметр из функции роутинга
+    -- return table server:route:render Отформатированный ответ с правильным HTTP_CODE
+    execEntry = function (self, request, key, value)
+        local curValue = self:testExist(key)
+        if not curValue then
+            return self:returnKeyNotFound(request, key)
         end
-        self:logInfo(self.const.logTypes.info, message)
-        return true
+        local delData = self:deleteDataInDB(key)
+        if(not delData)then
+            return self:returnKeyNotFound(request, key)
+        end
+        return self:returnValue(request, key, delData[2])
     end
 }
-local baseMeta = getmetatable(baseHTTP)
-baseMeta['__index'] = function (self, key)
-    if(baseHTTP[key])then
-        return baseHTTP[key]
-    end
-end
-setmetatable(delete, baseMeta)
-return delete
+return baseHTTP:setParent(delete)

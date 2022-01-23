@@ -21,4 +21,4 @@ local function dump(tbl, idx)
     return res
 end
 
-return dump
+return function (...) return dump({...}) end

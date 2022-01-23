@@ -1,5 +1,4 @@
 local baseHTTP = require("baseHTTP")
-local dump = require('dump')
 local json = require('json')
 
 --- Класс роутинга POST запроса
@@ -7,7 +6,7 @@ local post = {
     entry = baseHTTP.const.entrys.post,
     --- Функция вызываемая из базового класса
     -- Поведение при вызове метода POST 
-    -- POST /kv body: {key: "test", "value": {SOME ARBITRARY JSON}} 
+    -- POST /kv body: {key: "test", "value": {SOME ARBITRARY JSON}}  - внести в базу по ключу key значение value
     -- POST возвращает 409 если ключ уже существует,
     -- POST возвращают 400 если боди некорректное
     -- @self table сслыка на текущий класс
@@ -18,21 +17,15 @@ local post = {
     execEntry = function (self, request, key, value)
         local val, err = false, nil
         val, err = type(value)=='table' and value or self:parse(value)
-
-        dump({key=key, val = val, value= value, err = err })
-
         if not val then
             return self:returnErrorBodyParse(request, value, err)
         end
-
         local curValue = self:testExist(key)
         if curValue then
-            return self:returnKeyExist()
+            return self:returnKeyExist(request, key)
         end
-        
         local value = json.encode(val)
-        self:setData(key, value)
-        return self:returnValue(request, key, value)
+        return self:returnValue(request, key, self:setDataInDB(key, value)[2])
     end
 }
 

@@ -16,6 +16,8 @@
                     <input type='button' class='sendButton' value='get'    id='sendget'    />
                     <input type='button' class='sendButton' value='put'    id='sendput'    />
                     <input type='button' class='sendButton' value='delete' id='senddelete' />
+                    <input type='button' class='sendButton' value='rntime' id='sendrntime' />
+                    <input type='button' class='sendButton' value='inval'  id='sendinv' />
                 </div>
             </div>
             <div class=row>
@@ -26,18 +28,35 @@
     </body>
     <script>
         var methodTypes={
-            sendpost:'POST',
-            sendget:'GET',
-            sendput:'PUT',
-            senddelete:'DELETE',
+            sendpost:   {method:'POST',   url:'/kv',         addKey: false, sendValue: 'keyvalue'},
+            sendget:    {method:'GET',    url:'/kv',         addKey: true},
+            sendput:    {method:'PUT',    url:'/kv',         addKey: true,  sendValue: 'value'},
+            senddelete: {method:'DELETE', url:'/kv',         addKey: true},
+            sendrntime: {method:'GET',    url:'/randomtime', addKey: true},
+            sendinv:    {method:'POST',   url:'/kv',         addKey: false, sendValue: 'invalide'}
         }
         async function sendRequest(method, key, value) {
-            const response = await fetch('/kv'+((method !== 'POST1')?'/'+key:''), {
-                method: method, 
+            let body = null;
+            switch(method.sendValue){
+                case 'keyvalue':
+                    body = {key, value};
+                    break;
+                case 'value':
+                    body = {value};
+                    break;
+                case 'invalide':
+                    body = {key, value:'{brocken}'};
+                    break;
+            }
+            if(method.sendValue){
+                body=JSON.stringify(body);
+            }
+            const response = await fetch(method.url+(method.addKey?'/'+key:''), {
+                method: method.method, 
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: (method === 'POST' || method === 'PUT')? JSON.stringify({key:method === 'POST'?key:undefined, value}):null
+                body: body
             });
             const code = response.status;
             let answ = '';
@@ -67,7 +86,7 @@
             }
             sendRequest(method, key, value).then(({code, answ})=>{
                 document.getElementById("reciveCode").textContent = code;
-                document.getElementById("reciveText").textContent = answ;
+                document.getElementById("reciveText").textContent = typeof answ == 'stirng'?answ:JSON.stringify(answ);
                 console.log(1234,{method, key, value, code, answ})
             });
         }
