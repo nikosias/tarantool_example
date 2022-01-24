@@ -41,11 +41,12 @@ jobs:
             tarantoolctl rocks install http 
             tarantoolctl rocks install luatest 
             tarantoolctl rocks install luacov 
-
+            tarantoolctl rocks install luacov-reporters
+          
       # Runs a set of commands using the runners shell
       - name: Run luatests
         run: |
           ./.rocks/bin/luatest --coverage ./unitTest/test_*
-          ./.rocks/bin/luacov 
+          ./.rocks/bin/luacov -r summary
           cat ./luacov.report.out
             

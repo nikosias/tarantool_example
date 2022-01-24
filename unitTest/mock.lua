@@ -38,14 +38,26 @@ local schema = {
         return {key, value}
     end
 }
+
+--- Переопределяем основные функции
 local function mockBase(baseHttp)
     baseHTTP = baseHttp
     baseHttp.log=logTable
     baseHTTP:setSchemaConfig(schema, config)
 end
+
+--- Просмотреть последнюю запись в логе
+-- return table последняя запись в таблице логов
 local function getLastLogMessage()
     return logArchive[#logArchive]
 end
+
+
+--- Сформировать фейковый http.router.request
+-- @key string ключ - для stash
+-- @key string ключ - для param
+-- @value string | table значение
+-- return table http.router.request 
 local function getRequest(key, postKey, value)
     local body = {
         data={

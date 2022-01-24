@@ -1,12 +1,12 @@
 local config = {
     logFile = 'tarantool.log',
-    port    = 2020,
+    port    = 80,
     addr    = '*',
     rateLimiting = {
-        rps = 200,
+        rps = 20,
         maxDelay = 0.001,
         algoritm = 'window',  -- simple , window
-        maxWindowRequest = 40,
+        maxWindowRequest = 4,
     }
 }
 return config

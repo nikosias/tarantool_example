@@ -16,8 +16,14 @@ local constant = {
         simple = 'testRPSSimple',
         window = 'testRPSwindow'
 
+    },
+    httpCode  = {
+        ok              = 200,
+        badRequest      = 400,
+        notFound        = 404,
+        conflict        = 409,
+        tooManyRequests = 429
     }
-
 }
 constant.logTypes = {
     [constant.logTypesEntry.error] = 'log_messageError',

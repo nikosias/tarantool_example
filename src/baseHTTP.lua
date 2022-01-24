@@ -182,7 +182,7 @@ local baseHTTP = {
     execEntry = function(self,request)
         self:logError(self.message.log_requestClassNotFound)
         local ret = request:render({text = '' })
-        ret.status = 404
+        ret.status = self.const.httpCode.notFound
         return ret
     end,
     --- Форматируем значение для вывода
@@ -203,7 +203,7 @@ local baseHTTP = {
         value = self:valueToString(value)
         self:logDebug(self.message.log_requestReturnValue:format(request.peer.host,request.peer.port, self.entry, key, value))
         local ret = request:render({text = value })
-        ret.status = 200
+        ret.status = self.const.httpCode.ok
         return ret
     end, 
     --- Возвращаем ошибку ключ не найден
@@ -217,7 +217,7 @@ local baseHTTP = {
         local message = self.message.log_returnKeyNotFound:format(request.peer.host,request.peer.port, self.entry, key, body)
         self:logDebug(message)
         local ret = request:render({text = message })
-        ret.status = 404
+        ret.status = self.const.httpCode.notFound
         return ret
     end, 
     --- Возвращаем ошибку ключ уже создан
@@ -230,7 +230,7 @@ local baseHTTP = {
         local message = self.message.log_errorKeyExist:format(request.peer.host,request.peer.port, self.entry, key)
         self:logError(message)
         local ret = request:render({text = message})
-        ret.status = 409
+        ret.status = self.const.httpCode.conflict
         return ret
     end, 
     --- Возвращаем ошибку неправильный запрос
@@ -244,7 +244,7 @@ local baseHTTP = {
         local message = self.message.log_errorBodyParse:format(request.peer.host,request.peer.port, self.entry, value)
         self:logError(message)
         local ret = request:render({text = message})
-        ret.status = 400
+        ret.status = self.const.httpCode.badRequest
         return ret
     end,
     --- Возвращаем ошибку не задан ключ в запросе
@@ -256,7 +256,7 @@ local baseHTTP = {
         local message = self.message.log_errorKeyNotInRequest:format(request.peer.host,request.peer.port, self.entry)
         self:logError(message)
         local ret = request:render({text = message})
-        ret.status = 400
+        ret.status = self.const.httpCode.badRequest
         return ret
     end,
     --- Базовая функция вызываемая из роутинга
@@ -287,7 +287,7 @@ local baseHTTP = {
         local message = self.message.log_errorManyRPS:format(request.peer.host,request.peer.port, self.entry, key, value)
         self:logError(message)
         local ret = request:render({text = message})
-        ret.status = 429
+        ret.status = self.const.httpCode.tooManyRequests
         return ret
     end
 }
