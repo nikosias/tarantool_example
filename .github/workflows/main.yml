@@ -24,11 +24,31 @@ jobs:
       - uses: actions/checkout@v2
 
       # Runs a single command using the runners shell
-      - name: Run a one-line script
+      - name: Run Hello
         run: echo Hello, world!
 
       # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Run a insatll base
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+           ln -snf /usr/share/zoneinfo/Europe/Moscow /etc/localtime 
+           echo Europe/Moscow > /etc/timezone 
+           apt update 
+           apt install -y curl python3 python3-pip 
+           pip3 install pytest
+          
+      # Runs a set of commands using the runners shell
+      - name: Run install tarantool
+        run: |
+            curl -L https://tarantool.io/pOUCGKc/release/2.8/installer.sh | bash
+            apt install -y tarantool
+            tarantoolctl rocks install http 
+            tarantoolctl rocks install luatest 
+            tarantoolctl rocks install luacov 
+
+      # Runs a set of commands using the runners shell
+      - name: Run luatests
+        run: |
+          ./.rocks/bin/luatest --coverage ./unitTest/test_*
+          ./.rocks/bin/luacov 
+          cat ./luacov.report.out
+            
