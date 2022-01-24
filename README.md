@@ -1,3 +1,5 @@
+<img src=https://github.com/nikosias/tarantool_exmple/workflows/CI/badge.svg?branch-master>
+
 # Key/Value api on tarantool
 
 1) скачать/собрать тарантул
