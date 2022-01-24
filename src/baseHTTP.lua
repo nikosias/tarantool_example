@@ -1,6 +1,6 @@
 local const = require('constant')
-local dump  = require('dump')
 local json  = require('json')
+local clock = require('clock')
 
 --- Родительский класс
 -- Отсновные функции и переменные для всех маршрутов
@@ -10,17 +10,10 @@ local baseHTTP = {
     const   = const,
     entry   = const.entrys.base,
     entrys  = {},
-    config = {
-        logFile = nil,--'tarantool.log',
-        port    = 8080,
-        addr    = '*',
-        rateLimiting = {
-            rps = 10,
-            maxDelay = 0.1,
-            maxWindowRequest = 1,
-            algoritm = 'simple',  -- simple , window
-        }
-    },
+    config = {},
+    timeRPS = 0,
+    countRPS = 0,
+    countWindowRPS = {0,0,0,0,0,0,0,0,0,0},
     --- Основная функция логирования
     -- Проверяем что все параметры верны и записываем сообщение в лог
     -- @self table сслыка на текущий класс
@@ -68,7 +61,13 @@ local baseHTTP = {
     -- @self table сслыка на текущий класс
     -- return bool true - разрешаем; false - отбрасываем
     testRPSSimple = function (self)
-        return false
+        local cursecond = math.ceil(clock.realtime())
+        if(self.timeRPS ~= cursecond)then
+            self.timeRPS = cursecond
+            self.countRPS = -1
+        end
+        self.countRPS = self.countRPS + 1
+        return self.countRPS < self.config.rateLimiting.rps
     end,
     --- Проверка на превышение RPS алгоритм скользящее окно
     -- расчитываем можно ли отправить сообщение
@@ -77,6 +76,29 @@ local baseHTTP = {
     -- @self table сслыка на текущий класс
     -- return bool true - разрешаем; false - отбрасываем
     testRPSwindow = function (self)
+        local cursecond = math.ceil(clock.realtime()*10)
+        if self.timeRPS ~= cursecond then
+            self.timeRPS = cursecond
+            for i = 1, 9 do
+                self.countWindowRPS[i]=self.countWindowRPS[i+1]
+            end
+            self.countWindowRPS[9]=self.countRPS
+            self.countRPS = 0
+        end
+        
+        if (self.countRPS > self.config.rateLimiting.maxWindowRequest) then
+            return false
+        end
+
+        local allRPS = self.countRPS
+        for i = 1, 9 do
+            allRPS = allRPS + self.countWindowRPS[i]
+        end
+        if (allRPS>self.config.rateLimiting.rps) then
+            return false
+        end
+        
+        self.countRPS = self.countRPS + 1
         return true
     end,
     --- Проверка на валидность пришедшего json

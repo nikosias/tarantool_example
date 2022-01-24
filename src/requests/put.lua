@@ -1,9 +1,9 @@
 local baseHTTP = require("baseHTTP")
-local dump  = require('dump')
+local json = require('json')
 
 --- Класс роутинга PUT запроса
 local put = {
-    entry = baseHTTP.const.entrys.get,
+    entry = baseHTTP.const.entrys.put,
     --- Функция вызываемая из базового класса
     -- Поведение при вызове метода PUT 
     -- PUT kv/{id} - обновить данные в ключе
@@ -19,7 +19,12 @@ local put = {
         if not curValue then
             return self:returnKeyNotFound(request, key)
         end
-        return self:returnValue(request, key, self:updateDataInDB(key, self:valueToString(value))[2])
+        val, err = type(value)=='table' and value or self:parse(value)
+        if not val then
+            return self:returnErrorBodyParse(request, value, err)
+        end
+        local value = json.encode(val)
+        return self:returnValue(request, key, self:updateDataInDB(key, value)[2])
     end
 }
 return baseHTTP:setParent(put)

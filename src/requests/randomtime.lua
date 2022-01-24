@@ -1,9 +1,9 @@
 local baseHTTP = require("baseHTTP")
 local fiber = require('fiber')
-local dump = require('dump')
+
 --- Класс роутинга randomtime запроса
 local get = {
-    entry = baseHTTP.const.entrys.get,
+    entry = baseHTTP.const.entrys.randomtime,
     --- Функция вызываемая из базового класса
     -- Поведение при вызове randomtime такое же как и GET
     -- отличее что ответ отправляется со случайной задержкой заданной config.rateLimiting.maxDelay

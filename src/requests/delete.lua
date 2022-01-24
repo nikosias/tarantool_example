@@ -1,7 +1,7 @@
 local baseHTTP = require("baseHTTP")
 --- Класс роутинга DELETE  запроса
 local delete = {
-    entry = baseHTTP.const.entrys.get,
+    entry = baseHTTP.const.entrys.delete,
     --- Функция вызываемая из базового класса
     -- Поведение при вызове метода DELETE 
     -- DELETE kv/{id} - удалить данные по ключу
@@ -17,7 +17,7 @@ local delete = {
             return self:returnKeyNotFound(request, key)
         end
         local delData = self:deleteDataInDB(key)
-        if(not delData)then
+        if(not delData)then -- Удалены данные в другом потоке между проверкой на существование ключа и не посредственно удалением
             return self:returnKeyNotFound(request, key)
         end
         return self:returnValue(request, key, delData[2])
