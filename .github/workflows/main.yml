@@ -30,15 +30,14 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Run a insatll base
         run: |
-           apt update 
-           apt install -y curl python3 python3-pip 
-           pip3 install pytest
+           sudo apt install -y curl python3 python3-pip 
+           sudo pip3 install pytest
           
       # Runs a set of commands using the runners shell
       - name: Run install tarantool
         run: |
-            curl -L https://tarantool.io/pOUCGKc/release/2.8/installer.sh | bash
-            apt install -y tarantool
+            sudo curl -L https://tarantool.io/pOUCGKc/release/2.8/installer.sh | bash
+            sudo apt install -y tarantool
             tarantoolctl rocks install http 
             tarantoolctl rocks install luatest 
             tarantoolctl rocks install luacov 
